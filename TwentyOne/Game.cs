@@ -17,44 +17,67 @@ namespace TwentyOne
 		{
 			Console.WriteLine("Hello");
 			Console.WriteLine("-------------");
+            Console.WriteLine("Enter your name: ");
 
-			var user = new User("Lera");
-			var dealer = new User("Dealer");
+            var user = new User($"{Console.ReadLine()}");
+            var dealer = new User("Dealer");
 
-			Turn(dealer);
-			Turn(dealer);
+            Console.WriteLine("");
+            Console.WriteLine($"{dealer.Name} turn");
 
-			Console.WriteLine($"Dealer: {dealer.Score}");
+            Turn(dealer);
+
+            Console.WriteLine("");
+            Console.WriteLine($"Dealer: {dealer.Score}");
+			Console.WriteLine("-------------");
+            Console.WriteLine($"{user.Name} turn");
+
+            Turn(user);
+
+            Console.WriteLine("");
+
+            Turn(user);
+
+            Console.WriteLine("");
+            Console.WriteLine($"You: {user.Score}");
 			Console.WriteLine("-------------");
 
+            if (Blackjack(user)) Console.WriteLine("Blackjack! You won");
+            else
+            {
+                while (IsNextStepNeeded())
+                {
+                    Turn(user);
 
-			Console.WriteLine("Your turn.");
-			Console.WriteLine("");
+                    Console.WriteLine("");
+                    Console.WriteLine($"You: {user.Score}");
+                    Console.WriteLine("");
 
-			Turn(user);
+                    if (user.Score > 21)
+                    {
+                        Resume(user, dealer);
+                        break;
+                    }
+                }
 
-			Console.WriteLine($"You: {user.Score}");
-			Console.WriteLine("-------------");
+                if (user.Score < 22)
+                {
+                    Console.WriteLine("");
+                    Console.WriteLine($"{dealer.Name} turn");
+                    while (dealer.Score < 17)
+                    {
+                        Turn(dealer);
+                        Console.WriteLine("");
+                    }
 
-			while (IsNextStepNeeded())
-				Turn(user);
-
-			Console.WriteLine($"You: {user.Score}");
-
-			var steps = new Random().Next(1, 4);
-
-			for (int i = 0; i < steps && dealer.Score < 18; i++)
-			{
-				Turn(dealer);
-			}
-
-			Console.WriteLine($"Dealer: {dealer.Score}");
+                    Console.WriteLine($"Dealer: {dealer.Score}");
+                    Resume(user, dealer);
+                }
+            }
 		}
 
 		private void Turn(User user)
 		{
-			Console.WriteLine($"{user.Name} turn");
-
 			var card = _deck.GetCard();
 			switch (card)
 			{
@@ -85,13 +108,11 @@ namespace TwentyOne
 					break;
 			}
 
-			if (user.Score > 21)
-				Console.WriteLine($"{user.Name} lost");
 		}
 
 		private bool IsNextStepNeeded()
 		{
-			Console.WriteLine("Do you want another one? [Y/n]");
+            Console.WriteLine("Do you want another one? [Y/n]");
 			var response = Console.ReadLine();
 
 			if (response == "n")
@@ -102,5 +123,18 @@ namespace TwentyOne
 
 			return IsNextStepNeeded();
 		}
+
+        private bool Blackjack(User user)
+        {
+            if (user.Score == 21) return true;
+            else return false;
+        }
+
+        private void Resume(User user, User dealer)
+        {
+            if (user.Score == dealer.Score) Console.WriteLine("-----Game ended in a drow-----");
+            else if (user.Score > dealer.Score && user.Score < 22 || dealer.Score > 21) Console.WriteLine($"-----{user.Name} won-----");
+            else Console.WriteLine($"-----{dealer.Name} won-----");
+        }
 	}
 }
