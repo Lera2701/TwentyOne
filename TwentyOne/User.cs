@@ -13,5 +13,6 @@ namespace TwentyOne
 
 		public string Name { get; set; }
 		public int Score { get; set; }
+        public double Account { get; set; }
 	}
 }

@@ -7,21 +7,22 @@ namespace TwentyOne
 	class Game
 	{
 		private readonly Deck _deck;
+        public User user = new User($"{Program.PlayerName}");
+        public User dealer = new User("Dealer");
+        public int punt;
 
-		public Game()
+        public Game()
 		{
 			_deck = new Deck();
 		}
-
-		public void Start()
+        public void Start()
 		{
-			Console.WriteLine("Hello");
-			Console.WriteLine("-------------");
-            Console.WriteLine("Enter your name: ");
+            user.Name = Program.PlayerName;
 
-            var user = new User($"{Console.ReadLine()}");
-            var dealer = new User("Dealer");
-
+            Console.WriteLine("Enter your punt (divisible by 10): ");
+            
+            Punt(user);
+            
             Console.WriteLine("");
             Console.WriteLine($"{dealer.Name} turn");
 
@@ -42,7 +43,13 @@ namespace TwentyOne
             Console.WriteLine($"You: {user.Score}");
 			Console.WriteLine("-------------");
 
-            if (Blackjack(user)) Console.WriteLine("Blackjack! You won");
+            if (Blackjack(user))
+            {
+                Console.WriteLine("Blackjack! You won");
+                user.Account += user.Account * 0.5;
+                Console.WriteLine($"{user.Name}: {user.Account}");
+                Console.WriteLine($"{dealer.Name}: {dealer.Account}");
+            }
             else
             {
                 while (IsNextStepNeeded())
@@ -73,7 +80,10 @@ namespace TwentyOne
                     Console.WriteLine($"Dealer: {dealer.Score}");
                     Resume(user, dealer);
                 }
+                
             }
+            Program.Player1 += dealer.Account - punt;
+            Program.Player2 += user.Account - punt;
 		}
 
 		private void Turn(User user)
@@ -107,7 +117,6 @@ namespace TwentyOne
 					user.Score += card;
 					break;
 			}
-
 		}
 
 		private bool IsNextStepNeeded()
@@ -132,9 +141,50 @@ namespace TwentyOne
 
         private void Resume(User user, User dealer)
         {
-            if (user.Score == dealer.Score) Console.WriteLine("-----Game ended in a drow-----");
-            else if (user.Score > dealer.Score && user.Score < 22 || dealer.Score > 21) Console.WriteLine($"-----{user.Name} won-----");
-            else Console.WriteLine($"-----{dealer.Name} won-----");
+            if (user.Score == dealer.Score)
+            {
+                Console.WriteLine("-----PUSH-----");
+                dealer.Account = user.Account;
+                Console.WriteLine($"{user.Name}: {user.Account}");
+                Console.WriteLine($"{dealer.Name}: {dealer.Account}");
+            }
+            else if (user.Score > dealer.Score && user.Score < 22 || dealer.Score > 21)
+            {
+                Console.WriteLine($"-----{user.Name} WON-----");
+                user.Account += user.Account;
+                Console.WriteLine($"{user.Name}: {user.Account}");
+                Console.WriteLine($"{dealer.Name}: {dealer.Account}");
+            }
+            else
+            {
+                Console.WriteLine($"-----{dealer.Name} WON-----");
+                dealer.Account += user.Account * 2;
+                user.Account -= user.Account;
+                Console.WriteLine($"{user.Name}: {user.Account}");
+                Console.WriteLine($"{dealer.Name}: {dealer.Account}");
+            }
+        }
+
+        private void Punt(User user)
+        {
+            int x;
+            
+            try
+            {
+                x = Convert.ToInt32(Console.ReadLine());
+                if (x % 10 != 0 || x == 0)
+                {
+                    Console.WriteLine("Enter a correct number");
+                    Punt(user);
+                }
+                else user.Account = punt = x;
+            }
+            catch (FormatException)
+            {
+                Console.WriteLine("Enter a correct number");
+                Punt(user);
+            }
+            
         }
 	}
 }
