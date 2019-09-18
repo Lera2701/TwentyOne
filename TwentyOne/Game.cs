@@ -16,21 +16,23 @@ namespace TwentyOne
 			_deck = new Deck();
 		}
         public void Start()
-		{
+        {
             user.Name = Program.PlayerName;
+            Punt();
+            Program.PlayerAccount -= punt;
 
-            Console.WriteLine("Enter your punt (divisible by 10): ");
-            
-            Punt(user);
-            
             Console.WriteLine("");
             Console.WriteLine($"{dealer.Name} turn");
 
             Turn(dealer);
 
             Console.WriteLine("");
-            Console.WriteLine($"Dealer: {dealer.Score}");
-			Console.WriteLine("-------------");
+            Console.WriteLine($"{dealer.Name}: {dealer.Score}");
+
+            if (dealer.Score == 11) 
+                if (Insurance()) return;
+
+            Console.WriteLine("-------------");
             Console.WriteLine($"{user.Name} turn");
 
             Turn(user);
@@ -40,51 +42,78 @@ namespace TwentyOne
             Turn(user);
 
             Console.WriteLine("");
-            Console.WriteLine($"You: {user.Score}");
+            Console.WriteLine($"{user.Name}: {user.Score}");
 			Console.WriteLine("-------------");
 
             if (Blackjack(user))
             {
-                Console.WriteLine("Blackjack! You won");
-                user.Account += user.Account * 0.5;
-                Console.WriteLine($"{user.Name}: {user.Account}");
-                Console.WriteLine($"{dealer.Name}: {dealer.Account}");
+                Console.WriteLine($"Blackjack! {user.Name} won");
+                Program.PlayerAccount += punt * 2.5;
+                return;
             }
-            else
+
+            while (IsNextStepNeeded())
             {
-                while (IsNextStepNeeded())
+                Turn(user);
+
+                Console.WriteLine("");
+                Console.WriteLine($"{user.Name}: {user.Score}");
+                Console.WriteLine("");
+
+                if (user.Score > 21)
                 {
-                    Turn(user);
-
-                    Console.WriteLine("");
-                    Console.WriteLine($"You: {user.Score}");
-                    Console.WriteLine("");
-
-                    if (user.Score > 21)
-                    {
-                        Resume(user, dealer);
-                        break;
-                    }
-                }
-
-                if (user.Score < 22)
-                {
-                    Console.WriteLine("");
-                    Console.WriteLine($"{dealer.Name} turn");
-                    while (dealer.Score < 17)
-                    {
-                        Turn(dealer);
-                        Console.WriteLine("");
-                    }
-
-                    Console.WriteLine($"Dealer: {dealer.Score}");
                     Resume(user, dealer);
+                    break;
                 }
-                
             }
-            Program.Player1 += dealer.Account - punt;
-            Program.Player2 += user.Account - punt;
+            
+            if (user.Score < 22)
+            {
+                Console.WriteLine("");
+                Console.WriteLine($"{dealer.Name} turn");
+                while (dealer.Score < 17)
+                {
+                    Turn(dealer);
+                    Console.WriteLine("");
+                }
+
+                Console.WriteLine($"{dealer.Name}: {dealer.Score}");
+                Resume(user, dealer);
+            }
 		}
+
+        private bool Insurance()
+        {
+            Console.WriteLine("Insurance? [Y/n]");
+            var x = Console.ReadLine();
+            if (string.IsNullOrEmpty(x) || x == "y")
+            {
+                Console.WriteLine($"You're paying a half of your punt: {punt / 2}");
+                Console.WriteLine($"{user.Name} account: {Program.PlayerAccount -= punt / 2}");
+                Turn(dealer);
+                if (dealer.Score == 21)
+                {
+                    Console.WriteLine($"Blackjack! {user.Name} insurance has played");
+                    Console.WriteLine($"{user.Name}: {Program.PlayerAccount += punt}");
+                    return true;
+                }
+                else return false;
+            }
+
+            if (x == "n")
+            {
+                Turn(dealer);
+                if (dealer.Score == 21)
+                {
+                    Console.WriteLine($"Blackjack! {user.Name} lost");
+                    Console.WriteLine($"{user.Name}: {Program.PlayerAccount -= punt / 2}");
+                    return true;
+                }
+                else return false;
+            }
+
+            else return Insurance();
+        }
 
 		private void Turn(User user)
 		{
@@ -124,8 +153,10 @@ namespace TwentyOne
             Console.WriteLine("Do you want another one? [Y/n]");
 			var response = Console.ReadLine();
 
-			if (response == "n")
-				return false;
+            if (response == "n")
+            {
+                return false;
+            }
 
 			if (string.IsNullOrEmpty(response) || response == "y")
 				return true;
@@ -143,46 +174,40 @@ namespace TwentyOne
         {
             if (user.Score == dealer.Score)
             {
+                Program.PlayerAccount += punt;
                 Console.WriteLine("-----PUSH-----");
-                dealer.Account = user.Account;
-                Console.WriteLine($"{user.Name}: {user.Account}");
-                Console.WriteLine($"{dealer.Name}: {dealer.Account}");
             }
             else if (user.Score > dealer.Score && user.Score < 22 || dealer.Score > 21)
             {
                 Console.WriteLine($"-----{user.Name} WON-----");
-                user.Account += user.Account;
-                Console.WriteLine($"{user.Name}: {user.Account}");
-                Console.WriteLine($"{dealer.Name}: {dealer.Account}");
+                Program.PlayerAccount += punt * 2;
             }
             else
             {
-                Console.WriteLine($"-----{dealer.Name} WON-----");
-                dealer.Account += user.Account * 2;
-                user.Account -= user.Account;
-                Console.WriteLine($"{user.Name}: {user.Account}");
-                Console.WriteLine($"{dealer.Name}: {dealer.Account}");
+                Console.WriteLine($"-----{user.Name} LOST-----");
             }
         }
 
-        private void Punt(User user)
+        private void Punt()
         {
-            int x;
+            Console.WriteLine("Enter your punt divisible by 10 [def: 10]: ");
+            string x = Console.ReadLine();
             
             try
             {
-                x = Convert.ToInt32(Console.ReadLine());
-                if (x % 10 != 0 || x == 0)
-                {
-                    Console.WriteLine("Enter a correct number");
-                    Punt(user);
-                }
-                else user.Account = punt = x;
+                var y = Convert.ToInt32(x);
+                if (y % 10 != 0 || y == 0) Punt();
+                else punt = y;
             }
             catch (FormatException)
             {
-                Console.WriteLine("Enter a correct number");
-                Punt(user);
+                if (string.IsNullOrEmpty(x))
+                {
+                    Console.WriteLine("Default punt: 10");
+                    punt = 10;
+                    return;
+                }
+                Punt();
             }
             
         }
